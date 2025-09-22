@@ -30,6 +30,7 @@
 - **Camera & ML packages** – Real-time inference  
 - **SQLite / Firebase** – Gym Buddies & user data  
 
+<sub>created by deepak sharma</sub>
 ---
 
 ## 🚀 How It Works
