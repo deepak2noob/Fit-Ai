@@ -1,0 +1,43 @@
+name: testfit
+description: A new Flutter project.
+
+environment:
+  sdk: ^3.9.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Firebase core + Firestore
+  firebase_core: ^3.6.0
+  cloud_firestore: ^5.4.4
+
+  # Local database
+  sqflite: ^2.4.0
+  path: ^1.9.0
+
+  # Persistent storage for login/session
+  shared_preferences: ^2.3.3
+
+  # Launch external links
+  url_launcher: ^6.3.1
+
+  # Google ML Kit (pose detection)
+  google_mlkit_pose_detection: ^0.13.0
+
+  # Camera
+  camera: ^0.11.0+2
+
+  # Location services
+  geolocator: ^13.0.1
+
+  # Cupertino icons (optional, iOS-style)
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true

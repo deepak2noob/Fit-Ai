@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "764077198210",
+    "project_id": "fitai-43ba5",
+    "storage_bucket": "fitai-43ba5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:764077198210:android:c690d287ee733e7d769d9b",
+        "android_client_info": {
+          "package_name": "com.example.testfit"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB5ZSgBZaINGFVhhyBkMQ1ksQNTL_UIiVM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
