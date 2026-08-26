@@ -23,6 +23,14 @@ class _AuthPageState extends State<AuthPage> {
 
   String _status = "";
 
+  Future<Position?> _getOptionalLocation() async {
+    try {
+      return await _getLocation().timeout(const Duration(seconds: 5));
+    } catch (_) {
+      return null;
+    }
+  }
+
   // ✅ Get location
   Future<Position> _getLocation() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -43,7 +51,8 @@ class _AuthPageState extends State<AuthPage> {
     }
 
     return await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
+      desiredAccuracy: LocationAccuracy.high,
+    );
   }
 
   // ✅ Handle Login
@@ -68,16 +77,13 @@ class _AuthPageState extends State<AuthPage> {
       return;
     }
 
-    try {
-      final pos = await _getLocation();
+    final pos = await _getOptionalLocation();
+    if (pos != null) {
       await DBHelper.updateUserLocation(name, pos.latitude, pos.longitude);
-
-      // ✅ Save login state
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString("loggedInUser", name);
-    } catch (e) {
-      setState(() => _status = "Location error: $e");
     }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString("loggedInUser", name);
 
     if (mounted) {
       Navigator.pushReplacement(
@@ -100,7 +106,7 @@ class _AuthPageState extends State<AuthPage> {
     }
 
     try {
-      final pos = await _getLocation();
+      final pos = await _getOptionalLocation();
 
       await DBHelper.insertUser({
         "name": name,
@@ -108,8 +114,8 @@ class _AuthPageState extends State<AuthPage> {
         "phone": phone,
         "age": age,
         "gender": _gender,
-        "latitude": pos.latitude,
-        "longitude": pos.longitude,
+        "latitude": pos?.latitude,
+        "longitude": pos?.longitude,
       });
 
       // ✅ Save login state
@@ -124,6 +130,27 @@ class _AuthPageState extends State<AuthPage> {
       }
     } catch (e) {
       setState(() => _status = "Signup error: $e");
+    }
+  }
+
+  Future<void> _continueAsDemo() async {
+    const name = "Demo User";
+    await DBHelper.insertUser({
+      "name": name,
+      "password": "demo",
+      "phone": "0000000000",
+      "age": 25,
+      "gender": "Other",
+      "latitude": null,
+      "longitude": null,
+    });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString("loggedInUser", name);
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MainPage()),
+      );
     }
   }
 
@@ -175,13 +202,20 @@ class _AuthPageState extends State<AuthPage> {
                 onPressed: _isLogin ? _login : _signup,
                 child: Text(_isLogin ? "Login" : "Sign Up"),
               ),
+              if (_isLogin)
+                OutlinedButton(
+                  onPressed: _continueAsDemo,
+                  child: const Text("Continue as Demo"),
+                ),
               TextButton(
                 onPressed: () {
                   setState(() => _isLogin = !_isLogin);
                 },
-                child: Text(_isLogin
-                    ? "Don't have an account? Sign Up"
-                    : "Already have an account? Login"),
+                child: Text(
+                  _isLogin
+                      ? "Don't have an account? Sign Up"
+                      : "Already have an account? Login",
+                ),
               ),
               const SizedBox(height: 16),
               Text(_status, style: const TextStyle(color: Colors.red)),

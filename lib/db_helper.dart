@@ -1,13 +1,9 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'dart:math';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DBHelper {
   static Database? _db;
-
-  // 🔹 Firestore reference
-  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // ========== LOCAL SQLITE SETUP ==========
   static Future<Database> get database async {
@@ -53,38 +49,25 @@ class DBHelper {
 
   // ========== USER METHODS ==========
 
-  // ✅ Insert new user (both local + Firestore)
+  // Insert a user into the on-device database.
   static Future<int> insertUser(Map<String, dynamic> user) async {
     final db = await database;
-
-    // Save locally
-    int id = await db.insert("users", user,
-        conflictAlgorithm: ConflictAlgorithm.replace);
-
-    // Save to Firestore
-    await _firestore.collection("users").doc(user["name"]).set({
-      "name": user["name"],
-      "password": user["password"],
-      "phone": user["phone"],
-      "age": user["age"],
-      "gender": user["gender"],
-      "latitude": user["latitude"],
-      "longitude": user["longitude"],
-    });
-
-    return id;
+    return await db.insert(
+      "users",
+      user,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
-  // ✅ Get user by name (check Firestore first, fallback to SQLite)
+  // Get a user from the on-device database.
   static Future<Map<String, dynamic>?> getUserByName(String name) async {
-    try {
-      final doc = await _firestore.collection("users").doc(name).get();
-      if (doc.exists) return doc.data();
-    } catch (_) {}
-
     final db = await database;
-    final res =
-        await db.query("users", where: "name = ?", whereArgs: [name], limit: 1);
+    final res = await db.query(
+      "users",
+      where: "name = ?",
+      whereArgs: [name],
+      limit: 1,
+    );
     if (res.isNotEmpty) return res.first;
     return null;
   }
@@ -97,66 +80,50 @@ class DBHelper {
     return null;
   }
 
-  // ✅ Get all users (Firestore preferred, fallback local)
+  // Get all users stored on this device.
   static Future<List<Map<String, dynamic>>> getAllUsers() async {
-    try {
-      final snapshot = await _firestore.collection("users").get();
-      return snapshot.docs.map((doc) => doc.data()).toList();
-    } catch (_) {
-      final db = await database;
-      return await db.query("users");
-    }
+    final db = await database;
+    return await db.query("users");
   }
 
-  // ✅ Update user location (both local + Firestore)
+  // Update a user's locally stored location.
   static Future<int> updateUserLocation(
-      String name, double latitude, double longitude) async {
+    String name,
+    double latitude,
+    double longitude,
+  ) async {
     final db = await database;
 
-    // Local update
-    int updated = await db.update(
+    return await db.update(
       "users",
       {"latitude": latitude, "longitude": longitude},
       where: "name = ?",
       whereArgs: [name],
     );
-
-    // Firestore update
-    await _firestore.collection("users").doc(name).update({
-      "latitude": latitude,
-      "longitude": longitude,
-    });
-
-    return updated;
   }
 
   // ========== GYM METHODS ==========
   static Future<int> insertGym(Map<String, dynamic> gym) async {
     final db = await database;
 
-    // Save local
-    int id = await db.insert("gyms", gym,
-        conflictAlgorithm: ConflictAlgorithm.replace);
-
-    // Save Firestore
-    await _firestore.collection("gyms").add(gym);
-
-    return id;
+    return await db.insert(
+      "gyms",
+      gym,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   static Future<List<Map<String, dynamic>>> getGyms() async {
-    try {
-      final snapshot = await _firestore.collection("gyms").get();
-      return snapshot.docs.map((doc) => doc.data()).toList();
-    } catch (_) {
-      final db = await database;
-      return await db.query("gyms");
-    }
+    final db = await database;
+    return await db.query("gyms");
   }
 
   // ========== NEAREST BUDDY ==========
   static Future<Map<String, dynamic>?> getNearestBuddy(
-      String currentUserName, double lat, double lon) async {
+    String currentUserName,
+    double lat,
+    double lon,
+  ) async {
     final users = await getAllUsers();
 
     Map<String, dynamic>? nearest;
@@ -181,12 +148,17 @@ class DBHelper {
 
   // ✅ Haversine formula
   static double _calculateDistance(
-      double lat1, double lon1, double lat2, double lon2) {
+    double lat1,
+    double lon1,
+    double lat2,
+    double lon2,
+  ) {
     const R = 6371; // Earth radius in km
     final dLat = _deg2rad(lat2 - lat1);
     final dLon = _deg2rad(lon2 - lon1);
 
-    final a = (sin(dLat / 2) * sin(dLat / 2)) +
+    final a =
+        (sin(dLat / 2) * sin(dLat / 2)) +
         cos(_deg2rad(lat1)) *
             cos(_deg2rad(lat2)) *
             (sin(dLon / 2) * sin(dLon / 2));
